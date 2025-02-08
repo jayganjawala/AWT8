@@ -1,4 +1,3 @@
-// src/TaskManager.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './TaskManager.css';
@@ -10,18 +9,16 @@ const TaskManager = () => {
 
   useEffect(() => {
     axios.get('http://localhost:5000/tasks')
-  .then((response) => setTasks(response.data))
-  .catch((error) => {
-    if (!error.response) {
-      // Network error occurred
-      console.error('Network error: Unable to reach the server.');
-    } else {
-      // Server responded with a status code outside the 2xx range
-      console.error(`Server error: ${error.response.status}`);
-    }
-  });
-
-
+      .then((response) => setTasks(response.data))
+      .catch((error) => {
+        if (!error.response) {
+          // Network error occurred
+          console.error('Network error: Unable to reach the server.');
+        } else {
+          // Server responded with a status code outside the 2xx range
+          console.error(`Server error: ${error.response.status}`);
+        }
+      });
   }, []);
 
   const handleAddTask = () => {
@@ -57,28 +54,34 @@ const TaskManager = () => {
   return (
     <div>
       <h1>Task Manager</h1>
-      <div>
-        <input
-          type="text"
-          placeholder="Title"
-          value={newTask.title}
-          onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={newTask.description}
-          onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-        />
-        <select
-          value={newTask.status}
-          onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
-        >
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-        </select>
-        <button onClick={handleAddTask}>Add Task</button>
-      </div>
+      
+      {/* Show Add Task form only if no task is being edited */}
+      {!editingTask && (
+        <div>
+          <input
+            type="text"
+            placeholder="Title"
+            value={newTask.title}
+            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={newTask.description}
+            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+          />
+          <select
+            value={newTask.status}
+            onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
+          >
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button onClick={handleAddTask}>Add Task</button>
+        </div>
+      )}
+      
+      {/* Show Update Task form if a task is being edited */}
       {editingTask && (
         <div>
           <input
@@ -101,6 +104,7 @@ const TaskManager = () => {
           <button onClick={handleUpdateTask}>Update Task</button>
         </div>
       )}
+      
       <ul>
         {tasks.map((task) => (
           <li key={task.id}>
