@@ -6,17 +6,16 @@ const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({ title: '', description: '', status: 'pending' });
   const [editingTask, setEditingTask] = useState(null);
+  const [feedback, setFeedback] = useState({ message: '', type: '' });
 
   useEffect(() => {
     axios.get('http://localhost:5000/tasks')
       .then((response) => setTasks(response.data))
       .catch((error) => {
         if (!error.response) {
-          // Network error occurred
-          console.error('Network error: Unable to reach the server.');
+          setFeedback({ message: 'Network error: Unable to reach the server.', type: 'error' });
         } else {
-          // Server responded with a status code outside the 2xx range
-          console.error(`Server error: ${error.response.status}`);
+          setFeedback({ message: `Server error: ${error.response.status}`, type: 'error' });
         }
       });
   }, []);
@@ -26,8 +25,13 @@ const TaskManager = () => {
       .then((response) => {
         setTasks([...tasks, response.data]);
         setNewTask({ title: '', description: '', status: 'pending' });
+        setFeedback({ message: 'Task added successfully!', type: 'success' });
+        setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
       })
-      .catch((error) => console.error('Error adding task:', error));
+      .catch((error) => {
+        setFeedback({ message: 'Error adding task. Please try again.', type: 'error' });
+        setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
+      });
   };
 
   const handleUpdateTask = () => {
@@ -38,23 +42,38 @@ const TaskManager = () => {
         );
         setTasks(updatedTasks);
         setEditingTask(null);
+        setFeedback({ message: 'Task updated successfully!', type: 'success' });
+        setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
       })
-      .catch((error) => console.error('Error updating task:', error));
+      .catch((error) => {
+        setFeedback({ message: 'Error updating task. Please try again.', type: 'error' });
+        setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
+      });
   };
 
   const handleDeleteTask = (id) => {
-    axios.delete(`http://localhost:5000/tasks/${id}`)
-      .then(() => {
-        const updatedTasks = tasks.filter((task) => task.id !== id);
-        setTasks(updatedTasks);
-      })
-      .catch((error) => console.error('Error deleting task:', error));
+    // Show confirmation dialog before deleting the task
+    const isConfirmed = window.confirm('Are you sure you want to delete this task?');
+
+    if (isConfirmed) {
+      axios.delete(`http://localhost:5000/tasks/${id}`)
+        .then(() => {
+          const updatedTasks = tasks.filter((task) => task.id !== id);
+          setTasks(updatedTasks);
+          setFeedback({ message: 'Task deleted successfully!', type: 'success' });
+          setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
+        })
+        .catch((error) => {
+          setFeedback({ message: 'Error deleting task. Please try again.', type: 'error' });
+          setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
+        });
+    }
   };
 
   return (
     <div>
       <h1>Task Manager</h1>
-      
+
       {/* Show Add Task form only if no task is being edited */}
       {!editingTask && (
         <div>
@@ -80,7 +99,7 @@ const TaskManager = () => {
           <button onClick={handleAddTask}>Add Task</button>
         </div>
       )}
-      
+
       {/* Show Update Task form if a task is being edited */}
       {editingTask && (
         <div>
@@ -104,7 +123,7 @@ const TaskManager = () => {
           <button onClick={handleUpdateTask}>Update Task</button>
         </div>
       )}
-      
+
       <ul>
         {tasks.map((task) => (
           <li key={task.id}>
@@ -116,6 +135,13 @@ const TaskManager = () => {
           </li>
         ))}
       </ul>
+      
+      {/* Display feedback message */}
+      {feedback.message && (
+        <div className={`feedback ${feedback.type}`}>
+          {feedback.message}
+        </div>
+      )}
     </div>
   );
 };
